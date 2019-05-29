@@ -73,6 +73,8 @@ class SignIn extends Component {
                 remember: true,
             },
             loading: false,
+            isSnakbarVisible: true,
+            snakbarText: 'Hello',
         }
         this.shouldBlockNavigation = false;
 
@@ -83,6 +85,14 @@ class SignIn extends Component {
             return (emailPattern.test(login) || phonePattern.test(login));
         });
 
+    }
+
+    changeState = (props) => {
+        const state = this.state;
+        for (const key in props) {
+            state[key] = props[key];
+        }
+        this.setState(state);
     }
 
     handleSubmit = () => {
@@ -122,18 +132,18 @@ class SignIn extends Component {
 
         console.log({ requestSettings });
 
-        this.setState({
-            signinUser: this.state.signinUser,
-            loading: true
-        });
+        this.changeState({ loading: true });
+
         fetch(url, requestSettings)
             .then((resp) => {
                 console.log({ resp });
+                this.changeState({
+                    loading: false
+                });
             }).catch(err => {
                 console.log("ERRRRORRRRRR")
                 console.log({ err });
-                this.setState({
-                    signinUser: this.state.signinUser,
+                this.changeState({
                     loading: false
                 });
             });
@@ -143,13 +153,9 @@ class SignIn extends Component {
         // console.dir(event.target);
         const { signinUser } = this.state;
         signinUser[event.target.name] = event.target.type === "checkbox" ? event.target.checked : event.target.value.trim();
-        this.setState({
-            signinUser: this.state.signinUser,
-            loading:this.state.loading
-        });
+        this.changeState({ signinUser: signinUser });
         this.shouldBlockNavigation = signinUser.login !== '' || signinUser.password !== '';
         console.log(this.shouldBlockNavigation);
-        // console.log(this.state);
     }
 
     render() {
