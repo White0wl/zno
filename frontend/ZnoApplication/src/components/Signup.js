@@ -2,20 +2,20 @@ import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { Link as RouterLink } from "react-router-dom";
 import { Prompt } from "react-router";
+import { saveToken, register } from "./../auth";
 
 import {
     Avatar, Button, CssBaseline, Paper, Typography,
     // FormControl, Input, InputLabel,
-    Link, CircularProgress,
-
+    Link, CircularProgress, colors,
 } from '@material-ui/core';
+import CustomSnackbar from './CustomSnackbar';
 import { ValidatorForm, TextValidator } from "react-material-ui-form-validator";
-import CustomSnackbar from "./CustomSnackbar";
 
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 import withStyles from '@material-ui/core/styles/withStyles';
 
-import { links } from '../links';
+import { links, apiUrl } from '../links';
 
 const styles = theme => ({
     main: {
@@ -64,19 +64,17 @@ class SignUp extends Component {
         super(props);
         this.state = {
             signupUser: {
-                phone: '',
-                password: '',
-                confirmPassword: '',
-                email: '',
+                phone: '+380123456789',
+                password: '!Test123',
+                confirmPassword: '!Test123',
+                email: 'mail@domen.ua',
             },
             loading: false,
-            isSnackbarVisible: true,
-            snackbarMessage: 'Hello',
         }
 
         this.shouldBlockNavigation = false;
 
-        this.handleSubmit = this.handleSubmit.bind(this);
+        // this.handleSubmit = this.handleSubmit.bind(this);
 
         // custom rule will have name 'isPasswordMatch'
         ValidatorForm.addValidationRule('isPasswordMatch', (value) => {
@@ -93,10 +91,21 @@ class SignUp extends Component {
     }
 
 
+    hideSnackbar = () =>
+        this.refs.snackbar.changeState({ isSnackbarVisible: false });
+
+
+    showSnackbar = (message) => {
+        this.hideSnackbar();
+        this.refs.snackbar.changeState({
+            isSnackbarVisible: true,
+            snackbarMessage: message
+        });
+    }
+
     handleChange = (event) => {
         const { signupUser } = this.state;
         signupUser[event.target.name] = event.target.value;
-
         this.changeState({
             signupUser: signupUser,
             loading: false
@@ -107,32 +116,22 @@ class SignUp extends Component {
         this.shouldBlockNavigation = signupUser.phone !== '' || signupUser.password !== '';
     }
 
-    handleSubmit() {
+    handleSubmit = async () => {
         // your submit logic
         console.log("Submit");
-        console.log(this.state.signupUser);
         this.changeState({ loading: true });
-        // this.setState({ signupUser: this.state.signupUser, loading: true });
-        fetch('')
-            .then(res => {
-                this.changeState({ loading: false });
-                // this.setState({ signupUser: this.state.signupUser, loading: false });
-            })
-            .catch(err => {
-                console.error(err);
-                this.changeState({ loading: false });
-                // this.setState({ signupUser: this.state.signupUser, loading: false });
+        try {
+            await register(this.state.signupUser);
+        } catch (error) {
+            this.showSnackbar(error.toString());
+        } finally {
+            this.changeState({
+                loading: false
+            });
+        }
 
-            })
     }
 
-    handleCloseSnackbar = () =>
-        this.changeState({ isSnackbarVisible: false });
-    // this.setState({
-    //     signupUser: this.state.signupUser,
-    //     loading: this.state.loading,
-    //     isErrorShowing: false,
-    // });
 
 
     render() {
@@ -188,8 +187,8 @@ class SignUp extends Component {
                             type='password'
                             onChange={this.handleChange}
                             value={signupUser.password}
-                            validators={['required']}
-                            errorMessages={['Password is required']}
+                            validators={['required', 'matchRegexp:^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\\$%\\^&\\*])(?=.{6,}).*$']}
+                            errorMessages={['Password is required', 'The password must include one lower case character, one upper case character, a special character (!@#$%^&*) And be at least 6 characters long']}
                         />
                         {/* 
                         <FormControl margin="normal" required fullWidth>
@@ -244,9 +243,7 @@ class SignUp extends Component {
                     <Link className={classes.link} color='secondary' component={RouterLink} to={links.signin}>Sign in</Link>
                 </Paper>
 
-                <CustomSnackbar isSnackbarVisible={true} snackbarMessage={this.state.snackbarMessage} />
-
-
+                <CustomSnackbar ref='snackbar' />
 
             </main >
         );

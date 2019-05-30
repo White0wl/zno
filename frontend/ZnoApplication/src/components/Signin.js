@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import { Link as RouterLink } from "react-router-dom";
 import { Prompt } from "react-router";
 
+import { saveToken, signIn } from "./../auth";
+
 import {
     Avatar, Button, CssBaseline, Paper, Typography,
     // FormControl, Input, InputLabel, 
@@ -10,6 +12,7 @@ import {
     Link,
     CircularProgress,
 } from '@material-ui/core';
+import CustomSnackbar from "./CustomSnackbar";
 
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
 
@@ -73,8 +76,6 @@ class SignIn extends Component {
                 remember: true,
             },
             loading: false,
-            isSnakbarVisible: true,
-            snakbarText: 'Hello',
         }
         this.shouldBlockNavigation = false;
 
@@ -95,58 +96,36 @@ class SignIn extends Component {
         this.setState(state);
     }
 
-    handleSubmit = () => {
+    hideSnackbar = () =>
+        this.refs.snackbar.changeState({ isSnackbarVisible: false });
+
+
+    showSnackbar = (message) => {
+        this.hideSnackbar();
+        this.refs.snackbar.changeState({
+            isSnackbarVisible: true,
+            snackbarMessage: message.toString()
+        });
+
+    }
+
+    handleSubmit = async () => {
         console.log("Submit");
         // console.log(this.state);
         //10.2.127.32:2021
         //104.248.135.234:8080
-        const url = "http://104.248.135.234:8080/api/v1/account/Login";
-
-        const user = {
-            login: this.state.signinUser.login,
-            password: this.state.signinUser.password,
-            // rememberMe: this.state.signinUser.remember,
-        }
-
-        // console.log({ user });
-
-        const jsonBody = JSON.stringify(user);
-        var myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        // myHeaders.append("Content-Length", jsonBody.length.toString());
-        // myHeaders.append("X-Custom-Header", "ProcessThisImmediately");
-        myHeaders.append("Access-Control-Allow-Origin", "*");
-
-
-        const requestSettings = {
-            method: 'POST',
-            body: jsonBody,
-            mode: 'cors',
-            cache: 'default',
-            // headers: myHeaders
-            headers: {
-                "Content-Type": "application/json",
-                "Access-Control-Allow-Origin": "*",
-            }
-        };
-
-        console.log({ requestSettings });
-
         this.changeState({ loading: true });
-
-        fetch(url, requestSettings)
-            .then((resp) => {
-                console.log({ resp });
-                this.changeState({
-                    loading: false
-                });
-            }).catch(err => {
-                console.log("ERRRRORRRRRR")
-                console.log({ err });
-                this.changeState({
-                    loading: false
-                });
+        try {
+            await signIn(this.state.signinUser);
+        } catch (error) {
+            // console.error(error);
+            this.showSnackbar(error);
+        }
+        finally {
+            this.changeState({
+                loading: false
             });
+        }
     }
 
     handleChange = (event) => {
@@ -235,6 +214,9 @@ class SignIn extends Component {
                     <Link className={classes.link} color='secondary' component={RouterLink} to={links.signup}>Sign up</Link>
 
                 </Paper>
+
+                {/* isSnackbarVisible={this.state.isSnackbarVisible} snackbarMessage={this.state.snackbarMessage} */}
+                <CustomSnackbar ref='snackbar' />
             </main>
         );
     }

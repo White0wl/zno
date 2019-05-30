@@ -7,11 +7,11 @@ import { IconButton, Snackbar } from '@material-ui/core';
 class CustomSnackbar extends React.Component {
     constructor(props) {
         super(props);
-        console.log({props});
+        // console.log({props});
 
         this.state = {
-            isSnackbarVisible: props.isSnackbarVisible,
-            snackbarMessage: props.snackbarMessage,
+            isSnackbarVisible: !!props.isSnackbarVisible,
+            snackbarMessage: props.snackbarMessage || '',
         }
 
     }
@@ -32,13 +32,13 @@ class CustomSnackbar extends React.Component {
                 vertical: 'bottom',
                 horizontal: 'left',
             }}
-            open={this.state.isSnakbarVisible}
+            open={this.state.isSnackbarVisible}
             autoHideDuration={6000}
             onClose={this.handleCloseSnackbar}
             ContentProps={{
                 'aria-describedby': 'message-id',
             }}
-            message={<span id="message-id">{this.state.snakbarText}</span>}
+            message={<span id="message-id">{this.state.snackbarMessage}</span>}
             action={[
                 <IconButton
                     key="close"
